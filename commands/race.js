@@ -35,7 +35,7 @@ module.exports = {
     const raceMessage = await message.channel.send({ embeds: [startEmbed] });
     
     // Thiết lập thông số cuộc đua
-    const trackLength = 15; // Tăng độ dài đường đua một chút vì nhiều ngựa
+    const trackLength = 20; // Tăng độ dài đường đua một chút vì nhiều ngựa
     const positions = Array(raceManager.HORSE_COUNT).fill(0); 
     let raceFinished = false;
     
@@ -113,4 +113,5 @@ module.exports = {
     betManager.clearAllBets();
     raceManager.setRaceStatus(false);
   },
+
 };
