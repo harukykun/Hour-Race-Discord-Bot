@@ -65,4 +65,5 @@ client.on(Events.MessageCreate, async message => {
 
 // Đăng nhập vào Discord với token
 
-client.login(process.env.MTQ0MjQyNjI4OTgyMTcxNjU5MQ.Gu3I5p.adb-DYVPCktvmqmsTQykYXD0bWBVBloyvA9rZU);
+client.login(process.env.TOKEN);
+
