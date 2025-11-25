@@ -2,7 +2,7 @@
 
 const Player = require('../models/Player'); 
 
-const DEFAULT_BALANCE = 1000;
+const DEFAULT_BALANCE = 1000000;
 const DAILY_REWARD = 1000000;
 
 // KHÔNG CẦN DÙNG BIẾN 'DAILY_COOLDOWN' CỐ ĐỊNH NỮA
@@ -122,4 +122,5 @@ module.exports = {
     claimDaily,
     getLeaderboard
 };
+
 
