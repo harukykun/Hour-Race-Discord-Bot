@@ -4,80 +4,54 @@ const raceManager = require('../utils/raceManager');
 
 module.exports = {
   name: 'bet',
-  description: 'Đặt cược vào một con ngựa',
-  // 1. Thêm async vào đây
+  description: 'Đặt cược (có chế độ all-in)',
   async execute(message, args, client) {
     try {
-        // Kiểm tra đủ tham số
-        if (args.length < 2) {
-          return message.reply('Sử dụng: `!bet <số_ngựa> <số_tiền>` hoặc `!bet <số_ngựa> allin`\nVí dụ: `!bet 1 100`');
-        }
+        if (args.length < 2) return message.reply('Dùng: `!bet <ngựa> <tiền>` hoặc `!bet <ngựa> allin`');
         
-        // 1. Phân tích số ngựa
         const horseNumber = parseInt(args[0]);
-        
-        // 2. Phân tích số tiền cược (Xử lý Logic All-in)
         let betAmount;
-        const rawAmount = args[1].toLowerCase(); // Chuyển về chữ thường để check
+        let isAllIn = false; // Biến cờ đánh dấu
+        
+        const rawAmount = args[1].toLowerCase(); 
 
         if (rawAmount === 'allin') {
-            // Nếu lệnh là allin, lấy toàn bộ số dư từ betManager
-            // 2. Thêm await vì getBalance bây giờ gọi Database
             betAmount = await betManager.getBalance(message.author.id);
+            isAllIn = true; // Bật cờ lên
         } else {
-            // Nếu không phải allin, parse số như bình thường
             betAmount = parseInt(args[1]);
         }
         
-        // Kiểm tra tham số hợp lệ
-        if (isNaN(horseNumber) || isNaN(betAmount)) {
-          return message.reply('Số ngựa và số tiền cược phải là số hợp lệ.');
-        }
-
-        // Kiểm tra nếu all-in mà tài khoản bằng 0
-        if (betAmount <= 0) {
-            return message.reply('Bạn trắng dái rồi thì All-In kiểu gì?!');
-        }
+        if (isNaN(horseNumber) || isNaN(betAmount)) return message.reply('Số liệu không hợp lệ.');
+        if (betAmount <= 0) return message.reply('Không còn tiền để all-in (hoặc số tiền <= 0).');
         
-        // Đặt cược thông qua betManager
-        // 3. Thêm await vì placeBet cần chờ Database trừ tiền
-        const result = await betManager.placeBet(message.author.id, horseNumber, betAmount);
+        // Truyền biến isAllIn vào hàm placeBet
+        const result = await betManager.placeBet(message.author.id, horseNumber, betAmount, isAllIn);
         
-        // Xử lý nội dung hiển thị
         let description = result.message;
-        
-        // Nếu đặt cược thành công
         if (result.success) {
             const horseName = raceManager.getHorseName(horseNumber);
-            
-            // Thay đổi câu thông báo một chút nếu là All-in cho kịch tính (tùy chọn)
-            if (rawAmount === 'allin') {
-                 description = `🔥 **ALL-IN KHÔ MÁU!** 🔥\nĐã tất tay **${betAmount} coin** vào **${horseName}** (Số ${horseNumber}).\nMột là bạn sẽ về bờ, hai là ra đê ngủ với dế!`;
+            if (isAllIn) { // Nếu là all-in thì thông báo ngầu hơn
+                 description = `🔥 **ALL-IN KHÔ MÁU!** 🔥\nĐã tất tay **${betAmount} coin** vào **${horseName}** (Số ${horseNumber}).\n"Được ăn cả, ngã về không!"`;
             } else {
-                 description = `Đã đặt cược **${betAmount} coin** vào chiến mã **${horseName}** (Số ${horseNumber}). Hãy chờ xem bạn cook hay bạn đổi đời :Đ.`;
+                 description = `Đã cược **${betAmount} coin** vào **${horseName}** (Số ${horseNumber}).`;
             }
         }
         
-        // Tạo embed thông báo
         const embed = new EmbedBuilder()
           .setTitle(result.success ? '🎲 Đặt cược thành công' : '❌ Đặt cược thất bại')
-          .setColor(result.success ? '#00FF00' : '#FF0000')
+          .setColor(result.success ? (isAllIn ? '#FF0000' : '#00FF00') : '#FF0000') // All-in màu đỏ cho cháy
           .setDescription(description)
           .setTimestamp()
-          .setFooter({ text: `${message.author.username}`, iconURL: message.author.displayAvatarURL() });
+          .setFooter({ text: message.author.username, iconURL: message.author.displayAvatarURL() });
         
-        // Thêm thông tin số dư nếu đặt cược thành công
-        if (result.success) {
-          embed.addFields({ name: 'Số dư còn lại', value: `${result.balance} coin`, inline: true });
-        }
+        if (result.success) embed.addFields({ name: 'Số dư còn lại', value: `${result.balance} coin`, inline: true });
         
         return message.reply({ embeds: [embed] });
 
     } catch (error) {
-        console.error('Lỗi lệnh bet:', error);
-        return message.reply('Có lỗi xảy ra khi thực hiện đặt cược.');
+        console.error(error);
+        return message.reply('Lỗi khi đặt cược.');
     }
   },
 };
-
-
