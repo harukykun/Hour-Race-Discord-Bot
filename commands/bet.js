@@ -52,7 +52,7 @@ module.exports = {
             
             // Thay đổi câu thông báo một chút nếu là All-in cho kịch tính (tùy chọn)
             if (rawAmount === 'allin') {
-                 description = `🔥 **ALL-IN KHÔ MÁU!** 🔥\nĐã tất tay **${betAmount} coin** vào chiến mã **${horseName}** (Số ${horseNumber}).\nMột là về bờ, hai là ra đê!`;
+                 description = `🔥 **ALL-IN KHÔ MÁU!** 🔥\nĐã tất tay **${betAmount} coin** vào **${horseName}** (Số ${horseNumber}).\nMột là bạn sẽ về bờ, hai là ra đê ngủ với dế!`;
             } else {
                  description = `Đã đặt cược **${betAmount} coin** vào chiến mã **${horseName}** (Số ${horseNumber}). Hãy chờ xem bạn cook hay bạn đổi đời :Đ.`;
             }
@@ -79,4 +79,5 @@ module.exports = {
     }
   },
 };
+
 
