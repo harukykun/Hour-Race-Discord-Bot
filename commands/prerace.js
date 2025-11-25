@@ -34,7 +34,7 @@ module.exports = {
     // Hàm tạo Embed (để dùng lại khi edit tin nhắn)
     const createEmbed = (seconds) => {
         return new EmbedBuilder()
-          .setTitle('📋 DANH SÁCH CHIẾN MÃ - CHUẨN BỊ KHỞI TRANH')
+          .setTitle('📋 DANH SÁCH CÁC MÃ NƯƠNG TRONG TRẬN NÀY - CHUẨN BỊ KHỞI TRANH')
           .setColor(seconds > 10 ? '#FFA500' : '#FF0000') // Đổi màu đỏ khi sắp hết giờ
           .setDescription(`⏱️ **Thời gian đặt cược còn lại: ${seconds} giây!**\nNhanh tay dùng lệnh: \`!bet <số_thứ_tự> <tiền>\`\nCuộc đua sẽ **TỰ ĐỘNG** bắt đầu khi hết giờ.`)
           .addFields({ name: '🏇 Các ứng cử viên vô địch:', value: listText, inline: false })
@@ -82,3 +82,4 @@ module.exports = {
     }, 5000); // Chạy mỗi 5000ms = 5 giây
   },
 };
+
