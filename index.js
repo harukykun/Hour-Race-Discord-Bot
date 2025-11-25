@@ -1,3 +1,10 @@
+const mongoose = require('mongoose');
+
+// Thay link này bằng MONGO_URL bạn copy ở Bước 1
+// LƯU Ý: Khi đưa lên Railway, hãy dùng process.env.MONGO_URL để bảo mật
+mongoose.connect(process.env.MONGO_URL || 'link_mongodb_cua_ban_o_day')
+    .then(() => console.log('Đã kết nối Database thành công!'))
+    .catch((err) => console.log('Lỗi kết nối:', err));
 const fs = require('fs');
 const path = require('path');
 const { Client, Collection, GatewayIntentBits, Events } = require('discord.js');
@@ -66,4 +73,5 @@ client.on(Events.MessageCreate, async message => {
 // Đăng nhập vào Discord với token
 
 client.login(process.env.TOKEN);
+
 
