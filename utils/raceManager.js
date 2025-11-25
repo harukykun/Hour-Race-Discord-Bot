@@ -2,7 +2,7 @@
 
 const HORSE_COUNT = 10;
 let raceInProgress = false;
-let preraceInProgress = false; // <--- THÊM BIẾN NÀY (Trạng thái chờ đua)
+let preraceInProgress = false; // [Thêm] Trạng thái đang đếm ngược
 let currentRaceNames = {};
 const HORSE_EMOJI = '🏇';
 const FINISH_EMOJI = '🏁';
@@ -21,10 +21,10 @@ const HORSE_NAMES_POOL = [
 function isRaceInProgress() { return raceInProgress; }
 function setRaceStatus(status) { raceInProgress = status; }
 
-// --- THÊM 2 HÀM MỚI NÀY ---
+// --- [Thêm] Getter/Setter cho trạng thái Prerace ---
 function isPreraceInProgress() { return preraceInProgress; }
 function setPreraceStatus(status) { preraceInProgress = status; }
-// --------------------------
+// --------------------------------------------------
 
 function generateRaceNames() {
   currentRaceNames = {};
@@ -124,8 +124,8 @@ module.exports = {
   HORSE_COUNT,
   isRaceInProgress,
   setRaceStatus,
-  isPreraceInProgress, // Export hàm mới
-  setPreraceStatus,    // Export hàm mới
+  isPreraceInProgress, // [Export]
+  setPreraceStatus,    // [Export]
   generateRaceNames,
   getHorseName,
   getCurrentNames,
