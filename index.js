@@ -1,4 +1,4 @@
-zconst mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const { Client, Collection, GatewayIntentBits, Events } = require('discord.js');
 require('dotenv').config();
 const fs = require('fs');
@@ -78,3 +78,4 @@ client.on(Events.MessageCreate, async message => {
 // Đăng nhập vào Discord với token
 
 client.login(process.env.TOKEN);
+
