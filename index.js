@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+zconst mongoose = require('mongoose');
 const { Client, Collection, GatewayIntentBits, Events } = require('discord.js');
 require('dotenv').config();
 const fs = require('fs');
