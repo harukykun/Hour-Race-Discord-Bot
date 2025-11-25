@@ -7,49 +7,110 @@ module.exports = {
   description: 'Bắt đầu cuộc đua ngựa',
   async execute(message, args, client) {
     try {
-        if (raceManager.isRaceInProgress()) return message.reply('Đang đua rồi, từ từ thôi!');
+        // 1. Kiểm tra điều kiện
+        if (raceManager.isRaceInProgress()) {
+          return message.reply('Cuộc đua đang diễn ra. Vui lòng đợi kết thúc!');
+        }
         
         const bets = betManager.getAllBets();
-        if (bets.size === 0) return message.reply('Chưa ai đặt cược cả!');
+        if (bets.size === 0) {
+          return message.reply('Chưa có ai đặt cược. Hãy dùng `!prerace` để xem ngựa và `!bet` để đặt cược!');
+        }
         
-        if (Object.keys(raceManager.getCurrentNames()).length === 0) raceManager.generateRaceNames();
+        if (Object.keys(raceManager.getCurrentNames()).length === 0) {
+            raceManager.generateRaceNames();
+        }
         
+        // 2. Bắt đầu
         raceManager.setRaceStatus(true);
         
         const startEmbed = new EmbedBuilder()
           .setTitle('🏇 CUỘC ĐUA BẮT ĐẦU!')
           .setColor('#0099ff')
-          .setDescription('Các chiến mã đã xuất phát!')
+          .setDescription('Các tay đua kiệt xuất đã rời vạch xuất phát!')
           .setTimestamp();
         
         const raceMessage = await message.channel.send({ embeds: [startEmbed] });
         
-        const trackLength = 18; 
-        const positions = Array(raceManager.HORSE_COUNT).fill(0); 
+        const trackLength = 20; 
+        let positions = Array(raceManager.HORSE_COUNT).fill(0); 
         let raceFinished = false;
         
+        // --- VÒNG LẶP ĐUA ---
         while (!raceFinished) {
-          const newPositions = raceManager.simulateRaceStep(positions, trackLength);
-          for (let i = 0; i < positions.length; i++) positions[i] = newPositions[i];
+          // Lưu vị trí cũ
+          const prevPositions = [...positions];
           
+          // Tính toán bước chạy mới
+          const newPositions = raceManager.simulateRaceStep(positions, trackLength);
+          for (let i = 0; i < positions.length; i++) {
+            positions[i] = newPositions[i];
+          }
+          
+          // A. Hiển thị thanh đua (Visual)
           const statusMessage = raceManager.createRaceStatusMessage(positions, trackLength);
           await raceMessage.edit({ content: statusMessage, embeds: [] });
-          const leadingMessage = raceManager.createLeadingHorseMessage(positions);
-          await message.channel.send(leadingMessage);
-          const leadingMessage = raceManager.createLeadingHorseMessage(positions);
-          // await message.channel.send(leadingMessage); // Tắt dòng này nếu thấy spam quá
           
+          // B. Lấy thông báo người dẫn đầu (CHỈ KHAI BÁO 1 LẦN TẠI ĐÂY)
+          const leadingMessage = raceManager.createLeadingHorseMessage(positions);
+          
+          // Gửi thông báo dẫn đầu (Nếu bạn muốn luôn hiện)
+          await message.channel.send(leadingMessage);
+
+          // C. Tính năng BÌNH LUẬN VIÊN
+          let maxMove = 0;
+          let moverIndex = -1;
+          for(let i=0; i < positions.length; i++) {
+              const move = positions[i] - prevPositions[i];
+              if (move > maxMove) {
+                  maxMove = move;
+                  moverIndex = i;
+              }
+          }
+
+          const prevLeaderIndex = prevPositions.indexOf(Math.max(...prevPositions));
+          const currLeaderIndex = positions.indexOf(Math.max(...positions));
+          const leaderName = raceManager.getHorseName(currLeaderIndex + 1);
+
+          let commentary = "";
+          
+          if (currLeaderIndex !== prevLeaderIndex) {
+              commentary = `🔥 **ĐỘT BIẾN:** Chiến mã **${leaderName}** (Số ${currLeaderIndex + 1}) đã cướp lấy vị trí dẫn đầu!`;
+          } else if (maxMove >= 3) {
+              const moverName = raceManager.getHorseName(moverIndex + 1);
+              commentary = `🚀 **TỐC ĐỘ:** **${moverName}** vừa có pha bứt tốc kinh hoàng!`;
+          } else {
+              // Random bình luận
+              const randomComments = [
+                  "Các tay đua đang bám đuổi nhau sát nút!",
+                  "Khán giả đang reo hò cuồng nhiệt!",
+                  `Liệu **${leaderName}** có giữ được phong độ không?`
+              ];
+              if (Math.random() > 0.6) { // 40% cơ hội hiện bình luận ngẫu nhiên
+                  commentary = randomComments[Math.floor(Math.random() * randomComments.length)];
+              }
+          }
+
+          if (commentary) {
+              await message.channel.send(commentary);
+          }
+          
+          // Kiểm tra kết thúc
           raceFinished = raceManager.isRaceFinished(positions, trackLength);
-          if (!raceFinished) await new Promise(resolve => setTimeout(resolve, 2500)); 
+          
+          if (!raceFinished) {
+            await new Promise(resolve => setTimeout(resolve, 3000)); 
+          }
         }
         
+        // 3. Xử lý kết quả
         const winnerNumbers = raceManager.getWinners(positions);
         const betResults = await betManager.processBetResults(winnerNumbers);
         
         const winnerNames = winnerNumbers.map(num => `**${raceManager.getHorseName(num)}** (Số ${num})`);
         const winnerText = winnerNames.length === 1 
           ? `🎉 QUÁN QUÂN: ${winnerNames[0]}!` 
-          : `🎉 KẾT QUẢ HÒA: ${winnerNames.join(' và ')}!`;
+          : `🎉 KẾT QUẢ HÒA: ${winnerNames.join(' và ')} cùng về đích!`;
         
         const resultEmbed = new EmbedBuilder()
           .setTitle('🏁 KẾT QUẢ CHUNG CUỘC')
@@ -59,7 +120,7 @@ module.exports = {
         
         let winnerCount = 0;
         
-        // 1. Xử lý người thắng
+        // Hiện người thắng
         betResults.forEach(result => {
           if (result.won) {
             winnerCount++;
@@ -71,21 +132,24 @@ module.exports = {
           }
         });
         
-        // 2. Xử lý người THUA ALL-IN (Tính năng mới)
+        // Hiện người thua All-in
         const allInLosers = betResults.filter(r => !r.won && r.isAllIn);
         if (allInLosers.length > 0) {
             const loserMentions = allInLosers.map(r => `<@${r.userId}>`).join(', ');
             resultEmbed.addFields({
                 name: '💀 DANH SÁCH RA ĐÊ (Thua All-in)',
-                value: `${loserMentions} đã trắng dé và phải ra đê ngủ với dế.\n*Xin chia buồn... hoặc không :)*`,
+                value: `${loserMentions} đã tin sai ngựa và mất trắng cơ nghiệp.`,
                 inline: false
             });
-            // Tô viền đỏ nếu có người chết all-in
             resultEmbed.setColor('#FF0000'); 
         }
 
         if (winnerCount === 0) {
-          resultEmbed.addFields({ name: 'Thua hết!', value: 'Nhà cái húp trọn!', inline: false });
+          resultEmbed.addFields({
+            name: 'Thua hết!',
+            value: 'Không ai đoán đúng ngựa vô địch. Nhà cái húp trọn!',
+            inline: false
+          });
         }
         
         await message.channel.send({ embeds: [resultEmbed] });
@@ -100,5 +164,3 @@ module.exports = {
     }
   },
 };
-
-
