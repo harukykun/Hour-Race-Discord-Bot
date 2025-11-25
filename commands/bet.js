@@ -1,3 +1,31 @@
+// File: commands/bet.js (CẬP NHẬT)
+
+// ...
+module.exports = {
+  name: 'bet',
+  description: 'Đặt cược vào một con ngựa',
+  async execute(message, args, client) { // THÊM ASYNC
+    // ... (phần kiểm tra tham số giữ nguyên)
+    
+    // 2. Phân tích số tiền cược (Xử lý Logic All-in)
+    let betAmount;
+    const rawAmount = args[1].toLowerCase(); 
+
+    if (rawAmount === 'allin') {
+        // Lấy toàn bộ số dư từ betManager (đã là async)
+        betAmount = await betManager.getBalance(message.author.id); // THÊM AWAIT
+    } else {
+        // ...
+    }
+    
+    // ... (phần kiểm tra số tiền giữ nguyên)
+    
+    // Đặt cược thông qua betManager
+    const result = await betManager.placeBet(message.author.id, horseNumber, betAmount); // THÊM AWAIT
+    
+    // ... (phần xử lý nội dung hiển thị giữ nguyên)
+  },
+};
 const { EmbedBuilder } = require('discord.js');
 const betManager = require('../utils/betManager');
 const raceManager = require('../utils/raceManager');
@@ -71,3 +99,4 @@ module.exports = {
     return message.reply({ embeds: [embed] });
   },
 };
+
