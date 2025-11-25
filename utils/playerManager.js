@@ -1,132 +1,117 @@
-// File: utils/playerManager.js (ĐÃ VIẾT LẠI)
+// File: utils/playerManager.js (CẬP NHẬT LOGIC 00:00)
 
-// Import Player Model mới
 const Player = require('../models/Player'); 
-
-// KHÔNG CẦN 'const fs = require('fs');' VÀ CÁC THAM SỐ ĐƯỜNG DẪN NỮA
 
 const DEFAULT_BALANCE = 1000;
 const DAILY_REWARD = 500;
-const DAILY_COOLDOWN = 24 * 60 * 60 * 1000; // 24 giờ
+
+// KHÔNG CẦN DÙNG BIẾN 'DAILY_COOLDOWN' CỐ ĐỊNH NỮA
 
 /**
- * Lấy thông tin người chơi, tạo mới nếu chưa tồn tại.
- * @param {string} userId ID của người chơi
- * @returns {Promise<Object>} Thông tin người chơi (Mongoose Document)
+ * Hàm hỗ trợ: Kiểm tra xem 2 thời điểm có cùng một ngày không
+ * @param {Date} date1 
+ * @param {Date} date2 
+ * @returns {boolean}
  */
+function isSameDay(date1, date2) {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+}
+
 async function getPlayer(userId) {
-    // Dùng findOneAndUpdate với upsert: true để tìm, nếu không có thì tạo mới
+    // (Giữ nguyên logic cũ)
     let player = await Player.findOneAndUpdate(
         { userId: userId },
         { 
-            $setOnInsert: { // Chỉ set các giá trị này khi document được tạo mới
+            $setOnInsert: { 
                 balance: DEFAULT_BALANCE, 
                 lastDaily: null 
             }
         },
-        { 
-            new: true,       // Trả về document đã được cập nhật/tạo mới
-            upsert: true     // Nếu không tìm thấy, tạo mới document
-        }
+        { new: true, upsert: true }
     );
     return player;
 }
 
-/**
- * Cập nhật số dư của người chơi.
- * @param {string} userId ID của người chơi
- * @param {number} amount Số tiền thay đổi (dương là cộng, âm là trừ)
- * @returns {Promise<number>} Số dư mới của người chơi
- */
+// ... (Giữ nguyên updateBalance và hasEnoughBalance) ...
 async function updateBalance(userId, amount) {
-    // 1. Lấy thông tin người chơi (để đảm bảo người chơi tồn tại)
     const player = await getPlayer(userId); 
-    
-    // 2. Cập nhật số dư trong Database
-    const newBalance = player.balance + amount;
-    
-    // Đảm bảo số dư không âm trước khi lưu
-    const finalBalance = Math.max(0, newBalance);
-
+    const newBalance = Math.max(0, player.balance + amount);
     const updatedPlayer = await Player.findOneAndUpdate(
         { userId: userId },
-        { balance: finalBalance },
-        { new: true } // Trả về document mới
+        { balance: newBalance },
+        { new: true }
     );
-
     return updatedPlayer.balance;
 }
 
-/**
- * Kiểm tra xem người chơi có đủ số dư không.
- * @param {string} userId ID của người chơi
- * @param {number} amount Số tiền cần kiểm tra
- * @returns {Promise<boolean>} true nếu đủ số dư, false nếu không đủ
- */
 async function hasEnoughBalance(userId, amount) {
-    // Dùng findOne để đọc dữ liệu mới nhất
     const player = await Player.findOne({ userId: userId });
-    
     if (!player) {
-        // Nếu không có player, tạo player mới và kiểm tra (thường sẽ đủ)
         const newPlayer = await getPlayer(userId);
         return newPlayer.balance >= amount;
     }
-    
     return player.balance >= amount;
 }
 
 /**
- * Nhận phần thưởng hàng ngày.
- * @param {string} userId ID của người chơi
- * @returns {Promise<Object>} Kết quả nhận thưởng {success, message, balance}
+ * Nhận phần thưởng hàng ngày (Reset vào 00:00)
  */
 async function claimDaily(userId) {
-    const now = Date.now();
+    // Lấy thời gian hiện tại
+    const now = new Date(); // Thời gian thực tế của server (hoặc máy chạy bot)
     
-    let player = await getPlayer(userId); // Đảm bảo player tồn tại
+    // Lưu ý: Nếu muốn dùng giờ Việt Nam (GMT+7) thì cần xử lý thêm múi giờ.
+    // Code dưới đây dùng giờ của hệ thống server.
     
-    // Kiểm tra cooldown
-    // Chuyển lastDaily (Date object) thành timestamp để so sánh
-    if (player.lastDaily && now - player.lastDaily.getTime() < DAILY_COOLDOWN) { 
-        const timeLeft = new Date(player.lastDaily.getTime() + DAILY_COOLDOWN - now);
-        const hours = timeLeft.getUTCHours();
-        const minutes = timeLeft.getUTCMinutes();
-        const seconds = timeLeft.getUTCSeconds();
-        
-        return {
-            success: false,
-            message: `Bạn đã nhận thưởng hôm nay rồi. Vui lòng đợi ${hours}h ${minutes}m ${seconds}s nữa.`,
-            balance: player.balance
-        };
+    let player = await getPlayer(userId); 
+
+    // Kiểm tra nếu đã nhận thưởng rồi
+    if (player.lastDaily) {
+        // Chuyển lastDaily từ DB ra object Date
+        const lastDailyDate = new Date(player.lastDaily);
+
+        // So sánh: Nếu "hôm nay" trùng với "ngày nhận cuối cùng" -> Chưa qua 12h đêm
+        if (isSameDay(now, lastDailyDate)) {
+            // Tính thời gian còn lại đến 00:00 ngày mai
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            
+            const timeLeft = tomorrow - now;
+            const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
+            const seconds = Math.floor((timeLeft / 1000) % 60);
+
+            return {
+                success: false,
+                message: `Bạn đã điểm danh hôm nay rồi. Hãy quay lại sau ${hours}h ${minutes}m ${seconds}s nữa (qua 12h đêm)!`,
+                balance: player.balance
+            };
+        }
     }
     
-    // Cập nhật số dư và thời gian nhận thưởng
+    // Nếu chưa nhận hôm nay (hoặc là lần đầu tiên)
     player.balance += DAILY_REWARD;
-    player.lastDaily = new Date(now);
+    player.lastDaily = now; // Lưu thời điểm nhận là BÂY GIỜ
     
-    await player.save(); // Lưu thay đổi vào DB
+    await player.save();
     
     return {
         success: true,
-        message: `Bạn đã nhận ${DAILY_REWARD} coin hàng ngày!`,
+        message: `Điểm danh thành công ngày ${now.getDate()}/${now.getMonth() + 1}! Bạn nhận được ${DAILY_REWARD} coin.`,
         balance: player.balance
     };
 }
 
-/**
- * Lấy bảng xếp hạng người chơi theo số dư.
- * @param {number} limit Số lượng người chơi muốn lấy
- * @returns {Promise<Array>} Danh sách người chơi đã sắp xếp
- */
+// ... (Giữ nguyên getLeaderboard) ...
 async function getLeaderboard(limit = 10) {
-    // Dùng Mongoose để tìm, sắp xếp và giới hạn
     const leaderboard = await Player.find({})
-        .sort({ balance: -1 }) // Sắp xếp giảm dần theo balance
+        .sort({ balance: -1 }) 
         .limit(limit)
-        .select('userId balance') // Chỉ lấy 2 trường này
-        .lean(); // Tối ưu: Chuyển sang Object JS thuần
-        
+        .select('userId balance') 
+        .lean(); 
     return leaderboard;
 }
 
