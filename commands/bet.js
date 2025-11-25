@@ -1,6 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
 const betManager = require('../utils/betManager');
-// Thêm dòng này để lấy thông tin tên ngựa
 const raceManager = require('../utils/raceManager');
 
 module.exports = {
@@ -9,16 +8,33 @@ module.exports = {
   execute(message, args, client) {
     // Kiểm tra đủ tham số
     if (args.length < 2) {
-      return message.reply('Sử dụng: !bet <số_ngựa> <số_tiền>\nVí dụ: `!bet 1 100`');
+      return message.reply('Sử dụng: `!bet <số_ngựa> <số_tiền>` hoặc `!bet <số_ngựa> allin`\nVí dụ: `!bet 1 100`');
     }
     
-    // Phân tích tham số
+    // 1. Phân tích số ngựa
     const horseNumber = parseInt(args[0]);
-    const betAmount = parseInt(args[1]);
+    
+    // 2. Phân tích số tiền cược (Xử lý Logic All-in)
+    let betAmount;
+    const rawAmount = args[1].toLowerCase(); // Chuyển về chữ thường để check
+
+    if (rawAmount === 'allin') {
+        // Nếu lệnh là allin, lấy toàn bộ số dư từ betManager
+        // Đảm bảo betManager có hàm getBalance nhé!
+        betAmount = betManager.getBalance(message.author.id);
+    } else {
+        // Nếu không phải allin, parse số như bình thường
+        betAmount = parseInt(args[1]);
+    }
     
     // Kiểm tra tham số hợp lệ
     if (isNaN(horseNumber) || isNaN(betAmount)) {
-      return message.reply('Số ngựa và số tiền cược phải là số.');
+      return message.reply('Số ngựa và số tiền cược phải là số hợp lệ.');
+    }
+
+    // Kiểm tra nếu all-in mà tài khoản bằng 0
+    if (betAmount <= 0) {
+        return message.reply('Bạn không còn đồng nào để all-in (hoặc số tiền không hợp lệ)!');
     }
     
     // Đặt cược thông qua betManager
@@ -27,17 +43,21 @@ module.exports = {
     // Xử lý nội dung hiển thị
     let description = result.message;
     
-    // Nếu đặt cược thành công, hiển thị tên ngựa thay vì tin nhắn mặc định
+    // Nếu đặt cược thành công
     if (result.success) {
-        // Lấy tên ngựa từ raceManager
         const horseName = raceManager.getHorseName(horseNumber);
         
-        description = `Đã đặt cược **${betAmount} coin** vào chiến mã **${horseName}** (Số ${horseNumber}). Hãy chờ xem bạn cook hay bạn đổi đời :Đ.`;
+        // Thay đổi câu thông báo một chút nếu là All-in cho kịch tính (tùy chọn)
+        if (rawAmount === 'allin') {
+             description = `🔥 **ALL-IN KHÔ MÁU!** 🔥\nĐã tất tay **${betAmount} coin** vào chiến mã **${horseName}** (Số ${horseNumber}).\nMột là về bờ, hai là ra đê!`;
+        } else {
+             description = `Đã đặt cược **${betAmount} coin** vào chiến mã **${horseName}** (Số ${horseNumber}). Hãy chờ xem bạn cook hay bạn đổi đời :Đ.`;
+        }
     }
     
     // Tạo embed thông báo
     const embed = new EmbedBuilder()
-      .setTitle('🎲 Đặt cược thành công')
+      .setTitle(result.success ? '🎲 Đặt cược thành công' : '❌ Đặt cược thất bại')
       .setColor(result.success ? '#00FF00' : '#FF0000')
       .setDescription(description)
       .setTimestamp()
