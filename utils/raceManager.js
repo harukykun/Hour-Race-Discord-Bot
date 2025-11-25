@@ -24,7 +24,7 @@ const HORSE_NAMES_POOL = [
   "Biwa Hayahide", "Narita Taishin", "Winning Ticket", "Tamamo Cross", "Super Creek",
   "Inari One", "Haru Urara", "Twin Turbo", "Nice Nature", "Kitasan Black",
   "Satono Diamond", "Curren Chan", "Agnes Tachyon", "Manhattan Cafe", "King Halo",
-  "Matikanetannhauser", "Machikane Fukukitaru", "Narita Brian", "T.M. Opera O", "Admire Vega", "Still in Love",
+  "Matikanetannhauser", "Machikane Fukukitaru", "Narita Brian", "T.M. Opera O", "Admire Vega", "Still in Love", "Meisho Doto",
 ];
 
 /**
@@ -188,4 +188,5 @@ module.exports = {
   getWinners
 
 };
+
 
