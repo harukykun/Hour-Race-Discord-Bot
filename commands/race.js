@@ -34,7 +34,8 @@ module.exports = {
           
           const statusMessage = raceManager.createRaceStatusMessage(positions, trackLength);
           await raceMessage.edit({ content: statusMessage, embeds: [] });
-          
+          const leadingMessage = raceManager.createLeadingHorseMessage(positions);
+          await message.channel.send(leadingMessage);
           const leadingMessage = raceManager.createLeadingHorseMessage(positions);
           // await message.channel.send(leadingMessage); // Tắt dòng này nếu thấy spam quá
           
@@ -99,4 +100,5 @@ module.exports = {
     }
   },
 };
+
 
