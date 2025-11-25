@@ -134,7 +134,7 @@ function createLeadingHorseMessage(positions) {
   if (leadingNames.length === 1) {
     return `${HORSE_EMOJI}💨 ${leadingNames[0]} đang dẫn đầu!`;
   } else {
-    return `${HORSE_EMOJI}💨 Cuộc chiến căng thẳng giữa ${leadingNames.join(' và ')}!`;
+    return `${HORSE_EMOJI}💨 ${leadingNames.join(' và ')} đang cùng dẫn đầu!`;
   }
 }
 
@@ -188,3 +188,4 @@ module.exports = {
   getWinners
 
 };
+
