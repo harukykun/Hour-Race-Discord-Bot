@@ -1,3 +1,16 @@
+// File: commands/daily.js (CẬP NHẬT)
+
+// ...
+module.exports = {
+  name: 'daily',
+  description: 'Nhận quà tặng hằng ngày',
+  async execute(message, args, client) { // THÊM ASYNC
+    // Nhận quà hàng ngày
+    const result = await playerManager.claimDaily(message.author.id); // THÊM AWAIT
+    
+    // ... (phần tạo embed giữ nguyên)
+  },
+};
 const { EmbedBuilder } = require('discord.js');
 const playerManager = require('../utils/playerManager');
 
@@ -21,4 +34,5 @@ module.exports = {
     
     return message.reply({ embeds: [embed] });
   },
+
 };
