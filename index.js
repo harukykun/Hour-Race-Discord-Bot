@@ -1,14 +1,18 @@
 const mongoose = require('mongoose');
-
-// Thay link này bằng MONGO_URL bạn copy ở Bước 1
-// LƯU Ý: Khi đưa lên Railway, hãy dùng process.env.MONGO_URL để bảo mật
-mongoose.connect(process.env.MONGO_URL || 'link_mongodb_cua_ban_o_day')
-    .then(() => console.log('Đã kết nối Database thành công!'))
-    .catch((err) => console.log('Lỗi kết nối:', err));
-const fs = require('fs');
-const path = require('path');
 const { Client, Collection, GatewayIntentBits, Events } = require('discord.js');
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path'); // Giữ lại vì cần để load commands
+
+// --- KẾT NỐI DATABASE (Sử dụng biến môi trường MONGO_URL) ---
+// Thay thế dòng placeholder cũ bằng việc chỉ dùng process.env.MONGO_URL
+mongoose.connect(process.env.MONGO_URL)
+    .then(() => console.log('[INFO] Đã kết nối Database thành công!'))
+    .catch((err) => {
+        console.error('[ERROR] Lỗi khi kết nối Database:', err.message);
+        console.log('[WARNING] Bot sẽ KHÔNG thể hoạt động bình thường nếu không có kết nối Database.');
+    });
+
 
 // Khởi tạo client với các intents cần thiết
 const client = new Client({
@@ -63,7 +67,8 @@ client.on(Events.MessageCreate, async message => {
 
   try {
     // Thực thi lệnh
-    await command.execute(message, args, client);
+    // Thêm await vì các hàm execute trong commands cần dùng await
+    await command.execute(message, args, client); 
   } catch (error) {
     console.error(error);
     await message.reply('Đã xảy ra lỗi khi thực hiện lệnh!');
@@ -73,5 +78,3 @@ client.on(Events.MessageCreate, async message => {
 // Đăng nhập vào Discord với token
 
 client.login(process.env.TOKEN);
-
-
