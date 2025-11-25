@@ -1,3 +1,5 @@
+// File: commands/race.js
+
 const { EmbedBuilder } = require('discord.js');
 const raceManager = require('../utils/raceManager');
 const betManager = require('../utils/betManager');
@@ -7,7 +9,12 @@ module.exports = {
   description: 'Bắt đầu cuộc đua ngựa',
   async execute(message, args, client) {
     try {
-        // 1. Kiểm tra điều kiện
+        // [Thêm logic] Nếu đang đếm ngược Prerace thì chặn lệnh !race thủ công
+        if (raceManager.isPreraceInProgress()) {
+            return message.reply('⏳ **Đang đếm ngược!** Vui lòng đợi hết thời gian chờ, cuộc đua sẽ tự động bắt đầu.');
+        }
+
+        // 1. Kiểm tra điều kiện (Giữ nguyên)
         if (raceManager.isRaceInProgress()) {
           return message.reply('Cuộc đua đang diễn ra. Vui lòng đợi kết thúc!');
         }
@@ -21,7 +28,7 @@ module.exports = {
             raceManager.generateRaceNames();
         }
         
-        // 2. Bắt đầu
+        // 2. Bắt đầu (Phần còn lại giữ nguyên như cũ)
         raceManager.setRaceStatus(true);
         
         const startEmbed = new EmbedBuilder()
@@ -36,28 +43,19 @@ module.exports = {
         let positions = Array(raceManager.HORSE_COUNT).fill(0); 
         let raceFinished = false;
         
-        // --- VÒNG LẶP ĐUA ---
         while (!raceFinished) {
-          // Lưu vị trí cũ
           const prevPositions = [...positions];
-          
-          // Tính toán bước chạy mới
           const newPositions = raceManager.simulateRaceStep(positions, trackLength);
           for (let i = 0; i < positions.length; i++) {
             positions[i] = newPositions[i];
           }
           
-          // A. Hiển thị thanh đua (Visual)
           const statusMessage = raceManager.createRaceStatusMessage(positions, trackLength);
           await raceMessage.edit({ content: statusMessage, embeds: [] });
           
-          // B. Lấy thông báo người dẫn đầu (CHỈ KHAI BÁO 1 LẦN TẠI ĐÂY)
           const leadingMessage = raceManager.createLeadingHorseMessage(positions);
-          
-          // Gửi thông báo dẫn đầu (Nếu bạn muốn luôn hiện)
           await message.channel.send(leadingMessage);
 
-          // C. Tính năng BÌNH LUẬN VIÊN
           let maxMove = 0;
           let moverIndex = -1;
           for(let i=0; i < positions.length; i++) {
@@ -73,20 +71,18 @@ module.exports = {
           const leaderName = raceManager.getHorseName(currLeaderIndex + 1);
 
           let commentary = "";
-          
           if (currLeaderIndex !== prevLeaderIndex) {
               commentary = `🔥 **ĐỘT BIẾN:** Chiến mã **${leaderName}** (Số ${currLeaderIndex + 1}) đã cướp lấy vị trí dẫn đầu!`;
           } else if (maxMove >= 3) {
               const moverName = raceManager.getHorseName(moverIndex + 1);
               commentary = `🚀 **TỐC ĐỘ:** **${moverName}** vừa có pha bứt tốc kinh hoàng!`;
           } else {
-              // Random bình luận
               const randomComments = [
                   "Các tay đua đang bám đuổi nhau sát nút!",
                   "Khán giả đang reo hò cuồng nhiệt!",
                   `Liệu **${leaderName}** có giữ được phong độ không?`
               ];
-              if (Math.random() > 0.6) { // 40% cơ hội hiện bình luận ngẫu nhiên
+              if (Math.random() > 0.6) {
                   commentary = randomComments[Math.floor(Math.random() * randomComments.length)];
               }
           }
@@ -95,7 +91,6 @@ module.exports = {
               await message.channel.send(commentary);
           }
           
-          // Kiểm tra kết thúc
           raceFinished = raceManager.isRaceFinished(positions, trackLength);
           
           if (!raceFinished) {
@@ -103,7 +98,6 @@ module.exports = {
           }
         }
         
-        // 3. Xử lý kết quả
         const winnerNumbers = raceManager.getWinners(positions);
         const betResults = await betManager.processBetResults(winnerNumbers);
         
@@ -119,8 +113,6 @@ module.exports = {
           .setTimestamp();
         
         let winnerCount = 0;
-        
-        // Hiện người thắng
         betResults.forEach(result => {
           if (result.won) {
             winnerCount++;
@@ -132,7 +124,6 @@ module.exports = {
           }
         });
         
-        // Hiện người thua All-in
         const allInLosers = betResults.filter(r => !r.won && r.isAllIn);
         if (allInLosers.length > 0) {
             const loserMentions = allInLosers.map(r => `<@${r.userId}>`).join(', ');
@@ -153,7 +144,6 @@ module.exports = {
         }
         
         await message.channel.send({ embeds: [resultEmbed] });
-        
         betManager.clearAllBets();
         raceManager.setRaceStatus(false);
 
@@ -164,4 +154,3 @@ module.exports = {
     }
   },
 };
-
