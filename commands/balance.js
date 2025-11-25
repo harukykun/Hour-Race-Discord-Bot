@@ -1,3 +1,16 @@
+// File: commands/balance.js (CẬP NHẬT)
+
+// ...
+module.exports = {
+  name: 'balance',
+  description: 'Xem số tiền hiện có',
+  async execute(message, args, client) { // THÊM ASYNC
+    // Lấy thông tin người chơi
+    const player = await playerManager.getPlayer(message.author.id); // THÊM AWAIT
+    
+    // ... (phần tạo embed giữ nguyên)
+  },
+};
 const { EmbedBuilder } = require('discord.js');
 const playerManager = require('../utils/playerManager');
 
@@ -18,4 +31,5 @@ module.exports = {
     
     return message.reply({ embeds: [embed] });
   },
+
 };
