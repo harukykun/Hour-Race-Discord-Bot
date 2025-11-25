@@ -36,7 +36,7 @@ module.exports = {
 
         // Kiểm tra nếu all-in mà tài khoản bằng 0
         if (betAmount <= 0) {
-            return message.reply('Bạn không còn đồng nào để all-in (hoặc số tiền không hợp lệ)!');
+            return message.reply('Bạn trắng dái rồi thì All-In kiểu gì?!');
         }
         
         // Đặt cược thông qua betManager
@@ -79,3 +79,4 @@ module.exports = {
     }
   },
 };
+
