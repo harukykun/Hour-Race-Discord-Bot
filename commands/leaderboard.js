@@ -1,3 +1,16 @@
+// File: commands/leaderboard.js (CẬP NHẬT)
+
+// ...
+module.exports = {
+  name: 'leaderboard',
+  description: 'Xem bảng xếp hạng bú thẹt',
+  async execute(message, args, client) {
+    // Lấy bảng xếp hạng (top 10 người chơi)
+    const leaderboard = await playerManager.getLeaderboard(10); // THÊM AWAIT
+    
+    // ... (phần còn lại giữ nguyên)
+  },
+};
 const { EmbedBuilder } = require('discord.js');
 const playerManager = require('../utils/playerManager');
 
@@ -44,4 +57,5 @@ module.exports = {
     
     return message.reply({ embeds: [embed] });
   },
+
 };
