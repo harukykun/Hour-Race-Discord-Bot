@@ -6,6 +6,16 @@ const raceManager = require('./raceManager');
 let bets = new Collection();
 
 /**
+ * Lấy số dư hiện tại của người chơi (Hỗ trợ tính năng All-in)
+ * @param {string} userId ID của người chơi
+ * @returns {number} Số dư hiện tại
+ */
+function getBalance(userId) {
+    const player = playerManager.getPlayer(userId);
+    return player ? player.balance : 0;
+}
+
+/**
  * Đặt cược vào một con ngựa
  * @param {string} userId ID của người chơi
  * @param {number} horseNumber Số ngựa (1-5)
@@ -18,6 +28,15 @@ function placeBet(userId, horseNumber, amount) {
     return {
       success: false,
       message: 'Không thể đặt cược khi cuộc đua đang diễn ra!'
+    };
+  }
+  
+  // Kiểm tra người chơi đã cược chưa (Tránh lỗi đặt đè làm mất tiền cược cũ)
+  if (bets.has(userId)) {
+    const currentBet = bets.get(userId);
+    return {
+        success: false,
+        message: `Bạn đã đặt cược ${currentBet.amount} coin vào ngựa số ${currentBet.horseNumber} rồi. Vui lòng chờ vòng sau!`
     };
   }
   
@@ -135,5 +154,6 @@ module.exports = {
   getBet,
   getAllBets,
   clearAllBets,
-  processBetResults
+  processBetResults,
+  getBalance // Đã export thêm hàm này
 };
