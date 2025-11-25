@@ -138,7 +138,7 @@ module.exports = {
             const loserMentions = allInLosers.map(r => `<@${r.userId}>`).join(', ');
             resultEmbed.addFields({
                 name: '💀 DANH SÁCH RA ĐÊ (Thua All-in)',
-                value: `${loserMentions} đã tin sai ngựa và mất trắng cơ nghiệp.`,
+                value: `${loserMentions} đã trắng dé và phải ra đê ngủ với dế.\nXin chia buồn... hoặc không :).`,
                 inline: false
             });
             resultEmbed.setColor('#FF0000'); 
@@ -164,3 +164,4 @@ module.exports = {
     }
   },
 };
+
