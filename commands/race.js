@@ -24,7 +24,7 @@ module.exports = {
         
         const raceMessage = await message.channel.send({ embeds: [startEmbed] });
         
-        const trackLength = 20; 
+        const trackLength = 18; 
         const positions = Array(raceManager.HORSE_COUNT).fill(0); 
         let raceFinished = false;
         
@@ -99,3 +99,4 @@ module.exports = {
     }
   },
 };
+
