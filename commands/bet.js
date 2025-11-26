@@ -23,7 +23,7 @@ module.exports = {
         }
         
         if (isNaN(horseNumber) || isNaN(betAmount)) return message.reply('Số liệu không hợp lệ.');
-        if (betAmount <= 0) return message.reply('Trắng dé rồi thì all in kiểu gì?.');
+        if (betAmount <= 0) return message.reply('Trắng dé rồi thì không có quyền all in nhá cu?');
         
         // Truyền biến isAllIn vào hàm placeBet
         const result = await betManager.placeBet(message.author.id, horseNumber, betAmount, isAllIn);
@@ -32,7 +32,7 @@ module.exports = {
         if (result.success) {
             const horseName = raceManager.getHorseName(horseNumber);
             if (isAllIn) { // Nếu là all-in thì thông báo ngầu hơn
-                 description = `🔥 **ALL-IN KHÔ MÁU!** 🔥\nĐã tất tay **${betAmount} coin** vào **${horseName}** (Số ${horseNumber}).\n"Được ăn cả, ngã về không!"`;
+                 description = `🔥 **ALL-IN KHÔ MÁU!** 🔥\nĐã tất tay **${betAmount} coin** vào **${horseName}** (Số ${horseNumber}).\n"Được ăn cả, ngã về ra đê!"`;
             } else {
                  description = `Đã cược **${betAmount} coin** vào **${horseName}** (Số ${horseNumber}).`;
             }
@@ -55,4 +55,5 @@ module.exports = {
     }
   },
 };
+
 
