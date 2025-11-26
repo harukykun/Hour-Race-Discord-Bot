@@ -39,7 +39,7 @@ async function placeBet(userId, horseNumber, amount, isAllIn = false) {
   // Kiểm tra số dư
   if (!await playerManager.hasEnoughBalance(userId, amount)) {
     const player = await playerManager.getPlayer(userId);
-    return { success: false, message: `Không đủ tiền. Số dư: ${player.balance} coin.` };
+    return { success: false, message: `Không có tiền mà cứ đòi cược lớn. ${player.balance} coin bọ :Đ.` };
   }
   
   // Trừ tiền ngay lập tức
@@ -108,3 +108,4 @@ async function processBetResults(winners) {
 }
 
 module.exports = { placeBet, getBet, getAllBets, clearAllBets, processBetResults, getBalance };
+
