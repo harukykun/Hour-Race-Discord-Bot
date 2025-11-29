@@ -79,8 +79,8 @@ module.exports = {
           .setTitle('🏁 KẾT QUẢ CHUNG CUỘC')
           .setColor('#FFD700')
           .setDescription(`
-          🥇 **HẠNG 1 (x2):** ${rank1Names}
-          🥈 **HẠNG 2 (x1.5):** ${rank2Names}
+          🥇 **HẠNG 1 (x3.6):** ${rank1Names}
+          🥈 **HẠNG 2 (x2):** ${rank2Names}
           `)
           .setTimestamp();
         
@@ -134,3 +134,4 @@ module.exports = {
     }
   },
 };
+
