@@ -107,5 +107,67 @@ async function processBetResults(winners) {
   return results;
 }
 
+// ... (Keep the code above unchanged)
+
+// 2. Updated function to process bets for Rank 1 and Rank 2
+async function processBetResults(rank1Horses, rank2Horses) {
+  const results = [];
+  
+  // Iterate through each user
+  for (const [userId, userBets] of bets.entries()) {
+    // Iterate through each bet ticket of the user
+    for (const bet of userBets) {
+        const { horseNumber, amount, isAllIn } = bet;
+        
+        let winAmount = 0;
+        let won = false;
+        let rankType = null; // 'top1' or 'top2'
+
+        // Check Top 1 (x2 Payout)
+        if (rank1Horses.includes(horseNumber)) {
+            won = true;
+            winAmount = Math.floor(amount * 2);
+            rankType = 'top1';
+        } 
+        // Check Top 2 (x1.5 Payout)
+        else if (rank2Horses.includes(horseNumber)) {
+            won = true;
+            winAmount = Math.floor(amount * 1.5); // Floor to avoid decimals
+            rankType = 'top2';
+        }
+
+        if (won) {
+          // Add winning amount
+          const newBalance = await playerManager.updateBalance(userId, winAmount);
+          results.push({
+            userId, 
+            won: true, 
+            horseNumber, 
+            betAmount: amount, 
+            winAmount, 
+            newBalance, 
+            isAllIn,
+            rankType // Save rank type for display
+          });
+        } else {
+          // Lost
+          const player = await playerManager.getPlayer(userId);
+          results.push({
+            userId, 
+            won: false, 
+            horseNumber, 
+            betAmount: amount, 
+            winAmount: 0, 
+            newBalance: player.balance, 
+            isAllIn,
+            rankType: null
+          });
+        }
+    }
+  }
+  return results;
+}
+
 module.exports = { placeBet, getBet, getAllBets, clearAllBets, processBetResults, getBalance };
+
 
