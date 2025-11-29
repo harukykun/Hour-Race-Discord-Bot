@@ -120,12 +120,36 @@ function getWinners(positions) {
   return winners;
 }
 
+// Replace the old getWinners function with this one
+function getPodium(positions) {
+  // Create a list of objects { horse_id, position }
+  const horses = positions.map((pos, index) => ({ id: index + 1, pos }));
+  
+  // Sort descending by position (furthest distance first)
+  horses.sort((a, b) => b.pos - a.pos);
+
+  // Identify Rank 1 (The furthest position)
+  const maxPos = horses[0].pos;
+  const rank1 = horses.filter(h => h.pos === maxPos).map(h => h.id);
+
+  // Identify Rank 2: Filter out Rank 1 horses, find the best remaining position
+  let rank2 = [];
+  const remaining = horses.filter(h => h.pos < maxPos);
+  
+  if (remaining.length > 0) {
+    const secondMaxPos = remaining[0].pos;
+    rank2 = remaining.filter(h => h.pos === secondMaxPos).map(h => h.id);
+  }
+
+  return { rank1, rank2 };
+}
+
 module.exports = {
   HORSE_COUNT,
   isRaceInProgress,
   setRaceStatus,
-  isPreraceInProgress, // [Export]
-  setPreraceStatus,    // [Export]
+  isPreraceInProgress,
+  setPreraceStatus,
   generateRaceNames,
   getHorseName,
   getCurrentNames,
@@ -134,5 +158,5 @@ module.exports = {
   determineWinner,
   simulateRaceStep,
   isRaceFinished,
-  getWinners
+  getPodium // Export the new function instead of getWinners
 };
