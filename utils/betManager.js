@@ -59,13 +59,13 @@ async function processBetResults(rank1Horses, rank2Horses) {
         // Check Top 1 (x2)
         if (rank1Horses.includes(horseNumber)) {
             won = true;
-            winAmount = Math.floor(amount * 2);
+            winAmount = Math.floor(amount * 3.6);
             rankType = 'top1';
         } 
         // Check Top 2 (x1.5)
         else if (rank2Horses.includes(horseNumber)) {
             won = true;
-            winAmount = Math.floor(amount * 1.5); // Làm tròn xuống
+            winAmount = Math.floor(amount * 2); // Làm tròn xuống
             rankType = 'top2';
         }
 
@@ -102,3 +102,4 @@ async function processBetResults(rank1Horses, rank2Horses) {
 }
 
 module.exports = { placeBet, getBet, getAllBets, clearAllBets, processBetResults, getBalance };
+
