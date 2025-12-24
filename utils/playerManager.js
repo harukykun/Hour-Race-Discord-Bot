@@ -1,18 +1,33 @@
-// File: utils/playerManager.js (CẬP NHẬT LOGIC 00:00)
+const fs = require('fs');
+const path = require('path');
 
-const Player = require('../models/Player'); 
-
+const DATA_PATH = path.join(__dirname, '../data/players.json');
 const DEFAULT_BALANCE = 10000000;
 const DAILY_REWARD = 1000000;
 
-// KHÔNG CẦN DÙNG BIẾN 'DAILY_COOLDOWN' CỐ ĐỊNH NỮA
+function readData() {
+    try {
+        if (!fs.existsSync(DATA_PATH)) {
+            const initialData = {};
+            fs.mkdirSync(path.dirname(DATA_PATH), { recursive: true });
+            fs.writeFileSync(DATA_PATH, JSON.stringify(initialData));
+            return initialData;
+        }
+        const data = fs.readFileSync(DATA_PATH, 'utf8');
+        return data ? JSON.parse(data) : {};
+    } catch (error) {
+        return {};
+    }
+}
 
-/**
- * Hàm hỗ trợ: Kiểm tra xem 2 thời điểm có cùng một ngày không
- * @param {Date} date1 
- * @param {Date} date2 
- * @returns {boolean}
- */
+function writeData(data) {
+    try {
+        fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error("Loi khi ghi file JSON:", error);
+    }
+}
+
 function isSameDay(date1, date2) {
     return date1.getFullYear() === date2.getFullYear() &&
            date1.getMonth() === date2.getMonth() &&
@@ -20,99 +35,87 @@ function isSameDay(date1, date2) {
 }
 
 async function getPlayer(userId) {
-    // (Giữ nguyên logic cũ)
-    let player = await Player.findOneAndUpdate(
-        { userId: userId },
-        { 
-            $setOnInsert: { 
-                balance: DEFAULT_BALANCE, 
-                lastDaily: null 
-            }
-        },
-        { new: true, upsert: true }
-    );
-    return player;
+    const data = readData();
+    if (!data[userId]) {
+        data[userId] = {
+            userId: userId,
+            balance: DEFAULT_BALANCE,
+            lastDaily: null
+        };
+        writeData(data);
+    }
+    return data[userId];
 }
 
-// ... (Giữ nguyên updateBalance và hasEnoughBalance) ...
 async function updateBalance(userId, amount) {
-    const player = await getPlayer(userId); 
-    const newBalance = Math.max(0, player.balance + amount);
-    const updatedPlayer = await Player.findOneAndUpdate(
-        { userId: userId },
-        { balance: newBalance },
-        { new: true }
-    );
-    return updatedPlayer.balance;
+    const data = readData();
+    if (!data[userId]) {
+        data[userId] = { 
+            userId: userId, 
+            balance: DEFAULT_BALANCE, 
+            lastDaily: null 
+        };
+    }
+    data[userId].balance = Math.max(0, data[userId].balance + amount);
+    writeData(data);
+    return data[userId].balance;
 }
 
 async function hasEnoughBalance(userId, amount) {
-    const player = await Player.findOne({ userId: userId });
-    if (!player) {
-        const newPlayer = await getPlayer(userId);
-        return newPlayer.balance >= amount;
-    }
+    const player = await getPlayer(userId);
     return player.balance >= amount;
 }
 
-/**
- * Nhận phần thưởng hàng ngày (Reset vào 00:00)
- */
 async function claimDaily(userId) {
-    // Lấy thời gian hiện tại
-    const now = new Date(); // Thời gian thực tế của server (hoặc máy chạy bot)
+    const now = new Date();
+    const data = readData();
     
-    // Lưu ý: Nếu muốn dùng giờ Việt Nam (GMT+7) thì cần xử lý thêm múi giờ.
-    // Code dưới đây dùng giờ của hệ thống server.
-    
-    let player = await getPlayer(userId); 
+    if (!data[userId]) {
+        data[userId] = { 
+            userId: userId, 
+            balance: DEFAULT_BALANCE, 
+            lastDaily: null 
+        };
+    }
 
-    // Kiểm tra nếu đã nhận thưởng rồi
+    const player = data[userId];
+
     if (player.lastDaily) {
-        // Chuyển lastDaily từ DB ra object Date
         const lastDailyDate = new Date(player.lastDaily);
-
-        // So sánh: Nếu "hôm nay" trùng với "ngày nhận cuối cùng" -> Chưa qua 12h đêm
         if (isSameDay(now, lastDailyDate)) {
-            // Tính thời gian còn lại đến 00:00 ngày mai
             const tomorrow = new Date(now);
             tomorrow.setDate(tomorrow.getDate() + 1);
             tomorrow.setHours(0, 0, 0, 0);
             
             const timeLeft = tomorrow - now;
-            const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
-            const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
+            const hours = Math.floor((timeLeft / 3600000) % 24);
+            const minutes = Math.floor((timeLeft / 60000) % 60);
             const seconds = Math.floor((timeLeft / 1000) % 60);
 
             return {
                 success: false,
-                message: `Bạn đã điểm danh hôm nay rồi. Hãy quay lại sau ${hours}h ${minutes}m ${seconds}s nữa (qua 12h đêm)!`,
+                message: "ạn đã điểm danh hôm nay rồi. Quay lại sau " + hours + "h " + minutes + "m " + seconds + "s",
                 balance: player.balance
             };
         }
     }
     
-    // Nếu chưa nhận hôm nay (hoặc là lần đầu tiên)
     player.balance += DAILY_REWARD;
-    player.lastDaily = now; // Lưu thời điểm nhận là BÂY GIỜ
-    
-    await player.save();
+    player.lastDaily = now.toISOString();
+    writeData(data);
     
     return {
         success: true,
-        message: `Điểm danh thành công ngày ${now.getDate()}/${now.getMonth() + 1}! Bạn nhận được ${DAILY_REWARD} coin.`,
+        message: "Điểm danh thành công ngày " + now.getDate() + "/" + (now.getMonth() + 1),
         balance: player.balance
     };
 }
 
-// ... (Giữ nguyên getLeaderboard) ...
 async function getLeaderboard(limit = 10) {
-    const leaderboard = await Player.find({})
-        .sort({ balance: -1 }) 
-        .limit(limit)
-        .select('userId balance') 
-        .lean(); 
-    return leaderboard;
+    const data = readData();
+    return Object.values(data)
+        .sort((a, b) => b.balance - a.balance)
+        .slice(0, limit);
 }
 
 module.exports = {
@@ -122,7 +125,3 @@ module.exports = {
     claimDaily,
     getLeaderboard
 };
-
-
-
-

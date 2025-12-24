@@ -1,20 +1,8 @@
-const mongoose = require('mongoose');
 const { Client, Collection, GatewayIntentBits, Events } = require('discord.js');
 require('dotenv').config();
 const fs = require('fs');
-const path = require('path'); // Giữ lại vì cần để load commands
+const path = require('path');
 
-// --- KẾT NỐI DATABASE (Sử dụng biến môi trường MONGO_URL) ---
-// Thay thế dòng placeholder cũ bằng việc chỉ dùng process.env.MONGO_URL
-mongoose.connect(process.env.MONGO_URL)
-    .then(() => console.log('[INFO] Đã kết nối Database thành công!'))
-    .catch((err) => {
-        console.error('[ERROR] Lỗi khi kết nối Database:', err.message);
-        console.log('[WARNING] Bot sẽ KHÔNG thể hoạt động bình thường nếu không có kết nối Database.');
-    });
-
-
-// Khởi tạo client với các intents cần thiết
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -24,58 +12,50 @@ const client = new Client({
   ]
 });
 
-// Khởi tạo collection để lưu trữ lệnh
 client.commands = new Collection();
-
-// Khởi tạo collection để lưu trữ người chơi đã đặt cược
 client.bets = new Collection();
 
-// Đường dẫn đến thư mục commands
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
-// Đăng ký các lệnh
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);
   const command = require(filePath);
   
   if ('name' in command && 'execute' in command) {
     client.commands.set(command.name, command);
-    console.log(`[INFO] Đã đăng ký lệnh ${command.name}`);
-  } else {
-    console.log(`[WARNING] Lệnh tại ${filePath} thiếu thuộc tính 'name' hoặc 'execute'`);
   }
 }
 
-// Xử lý sự kiện khi bot sẵn sàng
 client.once(Events.ClientReady, () => {
-  console.log(`[INFO] Đã đăng nhập với tên ${client.user.tag}`);
+  console.log("Bot da san sang");
 });
 
-// Xử lý sự kiện khi có tin nhắn
 client.on(Events.MessageCreate, async message => {
-  // Bỏ qua tin nhắn từ bot hoặc không bắt đầu bằng !
   if (message.author.bot || !message.content.startsWith('!')) return;
 
-  // Phân tích lệnh và tham số
   const args = message.content.slice(1).trim().split(/ +/);
   const commandName = args.shift().toLowerCase();
 
-  // Kiểm tra xem lệnh có tồn tại không
   const command = client.commands.get(commandName);
   if (!command) return;
 
   try {
-    // Thực thi lệnh
-    // Thêm await vì các hàm execute trong commands cần dùng await
     await command.execute(message, args, client); 
   } catch (error) {
-    console.error(error);
-    await message.reply('Đã xảy ra lỗi khi thực hiện lệnh!');
+    await message.reply("Da xay ra loi khi thuc hien lenh");
   }
 });
 
-// Đăng nhập vào Discord với token
-
 client.login(process.env.TOKEN);
+const http = require('http');
 
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Bot is running');
+});
+
+const PORT = process.env.PORT || 8080;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log("Server dang lang nghe tai cong " + PORT);
+});
