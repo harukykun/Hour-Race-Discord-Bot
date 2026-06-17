@@ -1,0 +1,9 @@
+.code-review-graph
+.codegraph
+.pytest_cache
+tests
+__pycache__
+__init__.py
+.env
+docker-compose.yml
+dockerfile

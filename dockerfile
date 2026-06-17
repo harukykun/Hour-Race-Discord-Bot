@@ -1,7 +1,19 @@
-FROM node:18-slim
+FROM python:3.10-slim
+
 WORKDIR /app
-COPY package*.json ./
-RUN npm install --only=production
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
 COPY . .
-RUN mkdir -p data
-CMD [ "node", "index.js" ]
+
+# Set default env variables (can be overridden)
+ENV PORT=8080
+
+# Expose port for health checks
+EXPOSE 8080
+
+# Run the bot
+CMD ["python", "bot.py"]
